@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
-df = pd.read_csv('intensive_care_beds_2020_cleaned.csv')
+# use parse_dates in order to keep the datetime dtype on the given column
+df = pd.read_csv('intensive_care_beds_2020_cleaned.csv', parse_dates=['daten_stand'])
 # extract county codes
 code = df['gemeindeschluessel'][0:393]
 # convert Pandas Series to a list
