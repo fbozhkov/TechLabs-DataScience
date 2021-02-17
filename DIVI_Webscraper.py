@@ -1,10 +1,12 @@
 from urllib.request import urlretrieve
 import pandas as pd
-
+import pathlib
 from selenium.webdriver import Chrome
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 #PATH = "C:/WebDriver/bin"
+currpath = pathlib.Path().absolute()
+register_path = str(currpath) + '\Register'
 
 driver = webdriver.Chrome('C:/WebDriver/bin/chromedriver.exe')
 # open a given link, maximize window and accept cookies
@@ -20,14 +22,12 @@ driver.implicitly_wait(5)
 start_link = driver.find_element_by_link_text('Start')
 reg_link = 'DIVI-Intensivregister_2020-05-01_09-15'
 
-#intensive_register = driver.find_element_by_link_text('DIVI-Intensivregister_2021-01-01_12-15')
-#intensive_register.click()
-
-intensive_register = driver.find_element_by_xpath('//a[@aria-label="DIVI-Intensivregister_2021-01-01_12-15"]')
+reg_path='//a[contains(@aria-label, "DIVI-Intensivregister_2021-01-01" )]'
+intensive_register = driver.find_element_by_xpath(reg_path)
 intensive_register.click()
 
 url = driver.current_url
-urlretrieve(url, 'Intensiveregister_2021-01-01_12-15.csv')
+urlretrieve(url, register_path + '\Intensiveregister_2021-01-01.csv')
 #end_link = driver.find_element_by_xpath('//*[@title="Ende"]')
 #dummy_scroll = driver.find_element_by_link_text('Mitglied werden')
 #actions = ActionChains(driver)
