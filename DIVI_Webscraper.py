@@ -1,5 +1,6 @@
 from urllib.request import urlretrieve
 import pandas as pd
+import dates
 import pathlib
 from selenium.webdriver import Chrome
 from selenium import webdriver
@@ -9,6 +10,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 currpath = pathlib.Path().absolute()
 register_path = str(currpath) + '\Register'
 start_date = input("Enter start date: format (y-m-d)")
+end_date = input("Enter end date: format (y-m-d)")
 assert (type(start_date) == str)
 
 driver = webdriver.Chrome('C:/WebDriver/bin/chromedriver.exe')
@@ -28,9 +30,10 @@ date = start_date
 start_link = driver.find_element_by_link_text('Start')
 back_link = driver.find_element_by_link_text('Zurück')
 # intensive_register = ""
-
+'''
 reg_name = 'DIVI-Intensivregister_' + date
 reg_xpath = '//a[contains(@aria-label,' + "'" + reg_name + "'" + ' )]'
+'''
 
 
 def find(name, path):
@@ -52,14 +55,46 @@ def click(button):
         print("Could not click " + reg_name)
 
 
-def save():
+def save(thisdate):
     try:
         url = driver.current_url
-        urlretrieve(url, register_path + '\Intensiveregister_' + date + '.csv')
+        urlretrieve(url, register_path + '\Intensiveregister_' + thisdate + '.csv')
+        print("Saved: " + thisdate)
     except:
         print("Could not save file: " + reg_name)
 
-driver.quit()
+
+def savereg(thisdate):
+    reg_name = 'DIVI-Intensivregister_' + thisdate
+    reg_xpath = '//a[contains(@aria-label,' + "'" + reg_name + "'" + ' )]'
+    click(find(reg_name, reg_xpath))
+    save(thisdate)
+
+
+def saveall(sdate, edate):
+    thisdate = sdate
+    while True:
+        savereg(thisdate)
+        driver.back()
+        thisdate = dates.next_date(thisdate)
+        if thisdate == edate:
+            break
+
+
+saveall(start_date, end_date)
+''''
+        if thisdate != edate:
+        savereg(thisdate)
+        driver.back()
+        thisdate = dates.next_date(thisdate)
+    
+    for x in range(4):
+        savereg(thisdate)
+        driver.back()
+        thisdate = dates.next_date(thisdate)
+'''
+# driver.back()
+# driver.quit()
 # end_link = driver.find_element_by_xpath('//*[@title="Ende"]')
 # dummy_scroll = driver.find_element_by_link_text('Mitglied werden')
 # actions = ActionChains(driver)
