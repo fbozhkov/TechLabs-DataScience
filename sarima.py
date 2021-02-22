@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.stattools import kpss
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 pd.set_option('display.width', 400)
 pd.set_option('display.max_columns', 10)
@@ -85,3 +87,44 @@ aachen_log = aachen_log.replace([np.inf, -np.inf, np.nan], 0)
 
 print('\nDickey-Fuller Test on ' + get_df_name(aachen_log))
 adf_test(aachen_log['faelle_covid_aktuell_beatmet'])
+
+# Using ACF and PACF to choose model order
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+# Make ACF plot
+plot_acf(aachen.faelle_covid_aktuell_beatmet, lags=30, zero=False, ax=ax1)
+# Make PACF plot
+plot_pacf(aachen.faelle_covid_aktuell_beatmet, lags=30, zero=False, ax=ax2)
+
+plt.show()
+
+model = SARIMAX(aachen.faelle_covid_aktuell_beatmet, order=(8,1,0))
+results = model.fit()
+
+forecast = results.get_prediction(start=-30)
+mean_forecast = forecast.predicted_mean
+confidence_intervals = forecast.conf_int()
+
+arima_value_forecast = results.get_forecast(steps=14)
+arima_mean_forecast = arima_value_forecast.predicted_mean
+forecast_confidence_intervals = arima_value_forecast.conf_int()
+
+lower_limits = confidence_intervals.loc[:,'lower faelle_covid_aktuell_beatmet']
+upper_limits = confidence_intervals.loc[:,'upper faelle_covid_aktuell_beatmet']
+
+forecast_lower_limits = forecast_confidence_intervals.loc[:,'lower faelle_covid_aktuell_beatmet']
+forecast_upper_limits = forecast_confidence_intervals.loc[:,'upper faelle_covid_aktuell_beatmet']
+
+
+plt.plot(aachen.index, aachen.faelle_covid_aktuell_beatmet, label='observed')
+plt.plot(mean_forecast.index, mean_forecast, color = 'red', label='test')
+plt.fill_between(lower_limits.index,lower_limits , upper_limits, color='pink')
+plt.plot( arima_mean_forecast.index, arima_mean_forecast, color = 'green', label='forecast')
+plt.fill_between(forecast_lower_limits.index,forecast_lower_limits , forecast_upper_limits, color='lightgreen')
+plt.gcf().autofmt_xdate()
+plt.title('ARIMA(8,1,0)')
+plt.xlabel('Date')
+plt.ylabel('faelle_covid_aktuell_beatmet')
+plt.legend(loc = 'upper left')
+plt.savefig("ARIMA.jpeg", dpi=500)
+plt.show()
+
