@@ -5,6 +5,8 @@ import pathlib
 from selenium.webdriver import Chrome
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
+import selenium.common.exceptions as selexcept
+from datetime import datetime
 
 # PATH = "C:/WebDriver/bin"
 currpath = pathlib.Path().absolute()
@@ -12,10 +14,10 @@ register_path = str(currpath) + '\Register'
 start_date = input("Enter start date: format (y-m-d)")
 end_date = input("Enter end date: format (y-m-d)")
 assert (type(start_date) == str)
-
 driver = webdriver.Chrome('C:/WebDriver/bin/chromedriver.exe')
 # open a given link, maximize window and accept cookies
-driver.get('https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv?layout=table&start=40')
+# Set the link on the page that contains the data from chosen start_date
+driver.get('https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv?layout=table&start=0')
 driver.maximize_window()
 cookies_link = driver.find_element_by_link_text('Einverstanden')
 cookies_link.click()
@@ -28,7 +30,7 @@ driver.implicitly_wait(5)
 date = start_date
 
 start_link = driver.find_element_by_link_text('Start')
-back_link = driver.find_element_by_link_text('Zurück')
+
 # intensive_register = ""
 '''
 reg_name = 'DIVI-Intensivregister_' + date
@@ -40,10 +42,16 @@ def find(name, path):
     my_reg_name = name
     my_reg_xpath = path
     my_intensive_register = ""
-    try:
-        my_intensive_register = driver.find_element_by_xpath(my_reg_xpath)
-    except:
-        print("DIVI file not found:" + my_reg_name)
+    for attempt in range(2):
+        try:
+            print('Trying ' + my_reg_name)
+            my_intensive_register = driver.find_element_by_xpath(my_reg_xpath)
+        except selexcept.NoSuchElementException:
+            print("DIVI file not found on this page: " + my_reg_name)
+            back_link = driver.find_element_by_xpath('//*[@title="Zurück"]')
+            back_link.click()
+        else:
+            break
     return my_intensive_register
 
 
@@ -53,6 +61,7 @@ def click(button):
         intensive_register.click()
     except:
         print("Could not click " + reg_name)
+        driver.implicitly_wait(5)
 
 
 def save(thisdate):
@@ -77,8 +86,13 @@ def saveall(sdate, edate):
         savereg(thisdate)
         driver.back()
         thisdate = dates.next_date(thisdate)
-        if thisdate == edate:
+        if thisdate == dates.next_date(edate):
             break
+    print("Download completed")
+
+    with open('latest_report.txt', 'w') as f:
+        f.write(end_date)
+    driver.quit()
 
 
 saveall(start_date, end_date)
